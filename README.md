@@ -13,7 +13,7 @@ Login to the  DSS base URL and the project key observed in the job logs.
 3. For the prototype, self-signed certs is used and `.env` sets `DSS_VERIFY_SSL=false`. In production `DSS_VERIFY_SSL=true` with a trusted certificate should be used.
 4. Run `python check_dss_connection.py`. It reads datasets and scenario status; it does not save edits or start processing.
 5. Run `python app.py` and open `http://127.0.0.1:5000`. The page must show **Data source: Dataiku DSS**.
-6. Since record 1003 and correct country from UK to GB. Save, reload to see history, and show that the current batch output still says UK.
+6. Since record 1003 and correct country from UK to GB. Save, reload to see history, and show that the current batch output still says UK. Also try to correct 1004 amount from -50 to 50 and 1005 segment to Corporate; expected charges are 1.00 and 120.00. Rerun without new edits to verify persistence.
 7. Click **Request batch run**, then **Check batch status** until the run completes with SUCCESS. Click **Reload data**. Record 1003 should now show GB and its country issue should disappear.
 8. Inspect the correction log, snapshot and application results in DSS if the audience wants to see the complete data path.
 
