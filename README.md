@@ -214,9 +214,9 @@ This prototype uses one demo Basic Auth account, session-based CSRF protection a
 
 **Save correction does not trigger processing.** It appends the event and makes it available for the next scenario snapshot. **Request batch run** optionally requests the existing scenario immediately. Check batch status and reload after SUCCESS. The daily trigger still works if nobody presses the button.
 
-## Demonstrate the complete cycle
+## Run the complete prototype cycle
 
-1. Open Flask and confirm the four highlighted records.
+1. Open the Flask App and confirm the four highlighted records.
 2. Correct 1002 country to AE and provide a reason.
 3. Reload: output still has the old blank country; the correction is visible in history.
 4. Request a batch run, or wait for the daily schedule.
