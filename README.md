@@ -13,13 +13,13 @@ Login to the  DSS base URL and the project key observed in the job logs.
 3. For the prototype, self-signed certs is used and `.env` sets `DSS_VERIFY_SSL=false`. In production `DSS_VERIFY_SSL=true` with a trusted certificate should be used.
 4. Run `python check_dss_connection.py`. It reads datasets and scenario status; it does not save edits or start processing.
 5. Run `python app.py` and open `http://127.0.0.1:5000`. The page must show **Data source: Dataiku DSS**.
-6. Since record 1002 may already have been fixed in the notebook test, select 1003 and correct country from UK to GB. Save, reload to see history, and show that the current batch output still says UK.
+6. Since record 1003 and correct country from UK to GB. Save, reload to see history, and show that the current batch output still says UK.
 7. Click **Request batch run**, then **Check batch status** until the run completes with SUCCESS. Click **Reload data**. Record 1003 should now show GB and its country issue should disappear.
 8. Inspect the correction log, snapshot and application results in DSS if the audience wants to see the complete data path.
 
-Use a single Flask process for the prototype's filesystem correction store. The system running Flask must be able to reach the DSS address. The `poc_raw_source` name used in DSS does not require a change in Flask: Flask reads only the final output and correction log.
+The system running Flask must be able to reach the DSS address. The `poc_raw_source` name used in DSS does not require a change in Flask: Flask reads only the final output and correction log.
 
-For this single user prototype here managed filesystem datasets used.
+For the prototype here managed filesystem datasets used.
 
 ## Understand the prototype Flow
 
@@ -63,7 +63,7 @@ The snapshot and raw source are Flow roots. The snapshot is populated by the sce
 
 The business calculation is deliberately a placeholder: charge = amount × 2% for Retail, or amount × 1% for Corporate. This is not a trained ML model. Replace the calculation recipe with real calculations/scoring later.
 
-## Run the UI locally first
+## Run the Flask App locally first
 
 Prerequisite: Python 3.9 or newer for the local run. Use a Python version supported by DSS client when connecting to DSS.
 
@@ -110,7 +110,7 @@ Use a dedicated prototype Flow zone in the project, or a separate sandbox projec
 | 1004 | amount | -50 | 50 |
 | 1005 | segment | Unknown | Corporate |
 
-The uploaded file substitutes for Hive/HDFS in this prototype. Later replace this root with the actual Hive/HDFS dataset, or a recipe selecting and renaming its columns. Preserve stable record IDs and explicit source-to-editable-field mappings.
+The uploaded file substitutes for Hive/HDFS in this prototype.
 
 The country/segment lists and amount bounds are invented demo rules in `correction_core.py`.
 
@@ -125,7 +125,7 @@ Choose an existing DSS writable connection with permission to create managed tab
 5. Paste `dataiku/initialize_logs.py`.
 6. Set `CONNECTION` to your actual managed-write-enabled connection name and run **once**.
 
-It creates empty `poc_correction_log` and `poc_corrections_snapshot` datasets. The script refuses to run if either already exists. Do not rerun it to reset the demo.
+It creates empty `poc_correction_log` and `poc_corrections_snapshot` datasets. The script refuses to run if either already exists.
 
 Both datasets use these columns, all with DSS storage type **string**:
 
@@ -169,16 +169,10 @@ The app permits edits only to the three configured source fields. Calculated cha
 1. Create a **Python-script scenario** with ID `POC_DAILY_BATCH`.
 2. Paste `dataiku/daily_scenario.py` as its script.
 3. Select a Python environment with `pandas` and access to the project library.
-4. Configure the scenario to avoid overlapping runs. For the prototype, use only this scenario to build these outputs; avoid independent manual builds during review.
-5. Add a time-based trigger for **02:00 every day, Asia/Dubai**. Verify the timezone explicitly; do not assume DSS server time is Dubai time.
-6. Enable the scenario's automatic triggers. Availability depends on the DSS installation/license.
+4. Configure the scenario to avoid overlapping runs. For the prototype, use only this scenario to build these outputs.
 7. Run it manually once and check the successful run and resulting datasets.
 
-Each run reads the committed correction log once into a snapshot, overwrites the snapshot dataset, and forces the downstream recipes to rebuild. The scenario never overwrites the correction log. Edits committed after the snapshot read are picked up by the next run. Use a transactional SQL connection and keep the snapshot read consistent.
-
-The comparison uses trimmed source strings. Formatting changes can therefore require re-review. Replaying the same log is safe: it does not create new correction events.
-
-For an actual source-refresh recipe, add a source-refresh build step at the appropriate point and ensure it operates on a stable input batch. The supplied sample scenario reads the existing uploaded source; it does not fetch a third-party feed.
+Each run reads the committed correction log once into a snapshot, overwrites the snapshot dataset, and forces the downstream recipes to rebuild. The scenario never overwrites the correction log. Edits committed after the snapshot read are picked up by the next run. 
 
 ## Connect the external Flask backend to DSS
 
