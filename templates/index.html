@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Data correction prototype</title>
+<style>
+body{font:15px system-ui;margin:36px;color:#173044;background:#f4f7fa}h1{margin-bottom:8px}table{border-collapse:collapse;width:100%;background:white;margin:20px 0}th,td{padding:12px;text-align:left;border-bottom:1px solid #ddd}th{background:#e4edf3}button{background:#125e83;color:white;border:0;border-radius:5px;padding:11px;cursor:pointer}input,select{padding:10px;margin:5px;border:1px solid #aab8c0;border-radius:4px}.issue{background:#fff1ce}#message{white-space:pre-wrap;padding:14px;background:white}details{margin:20px 0}.scroll{overflow:auto}
+</style></head><body>
+<h1>Review and correct batch output</h1>
+<p><strong>Data source: {{mode}}</strong></p>
+<p>Save corrections, then wait for the daily batch or request a run. Reload after the batch completes.</p>
+<button onclick="runBatch()">Request batch run</button> <button onclick="checkStatus()">Check batch status</button> <button onclick="location.reload()">Reload data</button>
+<p id="message" role="status">Choose a record below to correct.</p>
+<div class="scroll"><table><thead><tr><th>ID</th><th>Customer</th><th>Country</th><th>Segment</th><th>Amount</th><th>Calculated charge</th><th>Issues</th><th>Review</th></tr></thead><tbody>
+{% for r in rows %}<tr class="{{ 'issue' if r.issue_columns else '' }}"><td>{{r.record_id}}</td><td>{{r.customer_name}}</td><td>{{r.country or ''}}</td><td>{{r.segment}}</td><td>{{r.amount}}</td><td>{{r.calculated_charge if r.calculated_charge is not none else ''}}</td><td>{{r.issue_columns}}</td><td><button class="select-record" data-id="{{r.record_id}}">Select</button></td></tr>{% endfor %}
+</tbody></table></div>
+<form id="editor"><label>Record <input id="record" readonly required></label><label>Field <select id="field">{% for f in fields %}<option>{{f}}</option>{% endfor %}</select></label><label>Corrected value <input id="value" required></label><label>Reason <input id="reason" required maxlength="500"></label><button>Save correction</button></form>
+<p>country: AE / IN / GB / US · segment: Retail / Corporate · amount: 0–1,000,000,000</p>
+<details><summary>Output schema</summary><pre>{{schema|tojson(indent=2)}}</pre></details>
+<details open><summary>Saved correction history</summary><p>History records submissions; batch application results are in Dataiku's poc_correction_results dataset.</p><div class="scroll"><table><tr><th>Record</th><th>Field</th><th>Before</th><th>After</th><th>Reviewer</th><th>Saved (UTC)</th><th>Reason</th></tr>{% for e in log %}<tr><td>{{e.record_id}}</td><td>{{e.field_name}}</td><td>{{e.old_value}}</td><td>{{e.new_value}}</td><td>{{e.edited_by}}</td><td>{{e.edited_at}}</td><td>{{e.reason}}</td></tr>{% endfor %}</table></div></details>
+<script>
+const rows={{rows|tojson}}, csrf={{csrf|tojson}};
+let selected=null, retryId=null, retryPayload=null;
+const message=document.getElementById('message');
+document.querySelectorAll('.select-record').forEach(button=>button.onclick=()=>{selected=rows.find(r=>r.record_id===button.dataset.id);document.getElementById('record').value=selected.record_id;document.getElementById('field').value=(selected.issue_columns||'country').split(',')[0];retryId=null;retryPayload=null;});
+async function call(path, body){const response=await fetch(path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:body?JSON.stringify(body):undefined});const result=await response.json();if(!response.ok){message.textContent=result.error||'The request could not be completed.';}else if(path==='/api/batch/status'){message.textContent=result.running?'The batch is running. Check again shortly.':`No batch is running. Last completed result: ${result.last_outcome||'not available'}. Reload data after a successful run.`;}else{message.textContent=result.message||'Request completed.';}return response.ok;}
+document.getElementById('editor').onsubmit=async event=>{event.preventDefault();if(!selected){message.textContent='Select a record first.';return;}const payload={record_id:selected.record_id,field_name:document.getElementById('field').value,new_value:document.getElementById('value').value,row_version:selected.row_version,reason:document.getElementById('reason').value};const key=JSON.stringify(payload);if(key!==retryPayload){retryId=crypto.randomUUID();retryPayload=key;}try{if(await call('/api/corrections',{...payload,correction_id:retryId})){message.textContent+='\nSaved. Reload to see correction history.';}}catch(error){message.textContent='Connection interrupted. Retry without changing the form to reuse the correction ID.';}};
+async function runBatch(){try{await call('/api/batch/run',{});}catch(error){message.textContent='Request interrupted. Check status before retrying.';}}
+async function checkStatus(){try{await call('/api/batch/status');}catch(error){message.textContent='Could not read status.';}}
+</script></body></html>

@@ -1,0 +1,6 @@
+record_id,customer_name,country,segment,amount
+1001,Alpha Trading,AE,Corporate,10000
+1002,Beta Stores,,Retail,2500
+1003,Gamma Services,UK,Corporate,5000
+1004,Delta Markets,IN,Retail,-50
+1005,Epsilon Holdings,US,Unknown,12000
