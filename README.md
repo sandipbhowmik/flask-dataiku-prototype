@@ -21,7 +21,7 @@ Use a single Flask process for the prototype's filesystem correction store. The 
 
 For this single user prototype here managed filesystem datasets used.
 
-## 1. Understand the prototype Flow
+## Understand the prototype Flow
 
 ```text
 [Flask UI]
@@ -63,7 +63,7 @@ The snapshot and raw source are Flow roots. The snapshot is populated by the sce
 
 The business calculation is deliberately a placeholder: charge = amount × 2% for Retail, or amount × 1% for Corporate. This is not a trained ML model. Replace the calculation recipe with real calculations/scoring later.
 
-## 2. Run the UI locally first
+## Run the UI locally first
 
 Prerequisite: Python 3.9 or newer for the local run. Use a Python version supported by DSS client when connecting to DSS.
 
@@ -94,7 +94,7 @@ Four rows are highlighted. Select a record, choose its incorrect field, supply t
 
 Local data persists in DSS servers's `managed filesystem`. Restarting the app preserves edits. There is no reset endpoint.
 
-## 3. Prepare the sample source dataset in DSS
+## Prepare the sample source dataset in DSS
 
 Use a dedicated prototype Flow zone in the project, or a separate sandbox project.
 
@@ -114,7 +114,7 @@ The uploaded file substitutes for Hive/HDFS in this prototype. Later replace thi
 
 The country/segment lists and amount bounds are invented demo rules in `correction_core.py`.
 
-## 4. Create the separate writable correction datasets
+## Create the separate writable correction datasets
 
 Choose an existing DSS writable connection with permission to create managed tables, read rows and append rows.
 
@@ -144,7 +144,7 @@ Both datasets use these columns, all with DSS storage type **string**:
 
 The log records **corrections**, not a second full copy of the final output. The Flow separately materializes a complete `poc_corrected_source` dataset for downstream processing.
 
-## 5. Add the correction and calculation recipes
+## Add the correction and calculation recipes
 
 Create a **Python recipe** with:
 
@@ -164,7 +164,7 @@ Run it once. Verify five output rows and the same four invalid fields. The outpu
 
 The app permits edits only to the three configured source fields. Calculated charge, IDs and batch metadata cannot be edited. A prediction override would need a separate override stage after scoring.
 
-## 6. Create the daily scenario
+## Create the daily scenario
 
 1. Create a **Python-script scenario** with ID `POC_DAILY_BATCH`.
 2. Paste `dataiku/daily_scenario.py` as its script.
@@ -180,7 +180,7 @@ The comparison uses trimmed source strings. Formatting changes can therefore req
 
 For an actual source-refresh recipe, add a source-refresh build step at the appropriate point and ensure it operates on a stable input batch. The supplied sample scenario reads the existing uploaded source; it does not fetch a third-party feed.
 
-## 7. Connect the external Flask backend to DSS
+## Connect the external Flask backend to DSS
 
 Create/use a DSS API key for an authorized user with access to the project, read access to output and correction datasets, write access to the correction dataset, and permission to execute the scenario. Validate the exact permissions with your administrator. API calls run with that DSS identity; `edited_by` separately records the Flask identity.
 
@@ -220,7 +220,7 @@ This prototype uses one demo Basic Auth account, session-based CSRF protection a
 
 **Save correction does not trigger processing.** It appends the event and makes it available for the next scenario snapshot. **Request batch run** optionally requests the existing scenario immediately. Check batch status and reload after SUCCESS. The daily trigger still works if nobody presses the button.
 
-## 8. Demonstrate the complete cycle
+## Demonstrate the complete cycle
 
 1. Open Flask and confirm the four highlighted records.
 2. Correct 1002 country to AE and provide a reason.
@@ -244,7 +244,7 @@ This prototype uses one demo Basic Auth account, session-based CSRF protection a
 | Source changed since reviewed batch | Correction skipped; SOURCE_CHANGED |
 | Scenario run failed | Status shows failure; inspect DSS logs before retrying |
 
-## 9. API routes and integration points
+## API routes and integration points
 
 | Method / route | Purpose |
 |---|---|
