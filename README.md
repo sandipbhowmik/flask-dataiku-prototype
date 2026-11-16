@@ -23,41 +23,7 @@ For the prototype here managed filesystem datasets used.
 
 ## Understand the prototype Flow
 
-```text
-[Flask UI]
-    |
-    | Save corrections through DSS API
-    v
-[poc_correction_log]
- Persistent correction history
-    |
-    | Daily or manually triggered scenario copies saved corrections
-    v
-[poc_corrections_snapshot]
-    |
-    |                         [poc_raw_source]
-    |                                |
-    +---------------+----------------+
-                    |
-                    v
-          [apply_corrections]
-                    |
-          +---------+------------------+
-          |                            |
-          v                            v
-[poc_corrected_source]      [poc_correction_results]
- Corrected input records    Applied or skipped status
-          |
-          v
- [demo_calculations]
-          |
-          v
-  [poc_final_output]
-          |
-          | Read updated output through DSS API
-          v
-      [Flask UI]
-```
+<img width="1500" height="550" alt="image" src="https://github.com/user-attachments/assets/22553e51-e2e9-4bee-9fbd-c5dbe7696f01" />
 
 The snapshot and raw source are Flow roots. The snapshot is populated by the scenario, not by a recipe linked back from the output. This avoids a circular Flow. `poc_correction_log` is persistent input state: never clear or rebuild it in the daily scenario.
 
